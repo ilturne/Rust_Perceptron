@@ -13,34 +13,40 @@ fn main() {
     let learning_rate = 0.1;
     let epochs = 1000;
 
-    //Generate some random data for the traning
-    let training_data: Vec<(Vec<f64>, bool)> = (0..100).map(|_| {
-        let x1: f64 = rng.gen_range(-1.0..1.0);
-        let x2: f64 = rng.gen_range(-1.0..1.0);
-        let y = if x1 + x2 > 0.0 { true } else { false };
-        (vec![x1, x2], y)
-    }).collect();
+    // Generate clustered data for training
+    let cluster_size = 50;
+    let mut training_data = vec![];
+    for _ in 0..cluster_size {
+        let x1: f64 = rng.gen_range(-1.0..0.0);
+        let x2: f64 = rng.gen_range(-1.0..0.0);
+        training_data.push((vec![x1, x2], false));
+    }
+    for _ in 0..cluster_size {
+        let x1: f64 = rng.gen_range(0.0..1.0);
+        let x2: f64 = rng.gen_range(0.0..1.0);
+        training_data.push((vec![x1, x2], true));
+    }
 
     let mut perceptron = Perceptron::new(num_features, learning_rate);
     perceptron.train(&training_data, epochs);
 
-    plot_data(&training_data, &perceptron);
-}
-
-//This will be our activation function which is a step function
-fn step_function(input: f64) -> bool {
-    return if input > 0.0 {
-        true
+    if perceptron.can_separate(&training_data) {
+        plot_data(&training_data, &perceptron);
     } else {
-        false
+        println!("A line cannot be made.");
     }
 }
 
+// This will be our activation function which is a step function
+fn step_function(input: f64) -> bool {
+    input > 0.0
+}
+
 impl Perceptron {
-    //This initializes random weights and bias for the Perceptron. The num_features is just the range of random numbers used
+    // This initializes random weights and bias for the Perceptron. The num_features is just the range of random numbers used
     pub fn new(num_features: usize, learning_rate: f64) -> Perceptron {
         let mut rng = rand::thread_rng();
-        let weights = (0..num_features).map(|_| rng.gen_range(-1.0..1.0)).collect(); //The map function is applied to the vector and iterates through each item in the vector. The |_| is used  to indicate that a variable is intentionally ignored (it's random, so we don't care what the value is).
+        let weights = (0..num_features).map(|_| rng.gen_range(-1.0..1.0)).collect();
         let bias = rng.gen_range(-1.0..1.0);
         Perceptron {
             weights,
@@ -50,26 +56,26 @@ impl Perceptron {
     }
 
     fn predict(&self, inputs: &Vec<f64>) -> bool {
-        let sum: f64 = self.weights.iter().zip(inputs).map(|(w,x)| w * x).sum::<f64>() + self.bias;
-        return step_function(sum);
+        let sum: f64 = self.weights.iter().zip(inputs).map(|(w, x)| w * x).sum::<f64>() + self.bias;
+        step_function(sum)
     }
 
-
     fn train(&mut self, training_data: &Vec<(Vec<f64>, bool)>, epochs: usize) {
-        /* An epoch represents one complete pass through the entire training dataset. */
         for _ in 0..epochs {
             for (inputs, target) in training_data {
                 let prediction = self.predict(inputs);
                 let error = (*target as i32 - prediction as i32) as f64;
 
-                /*This inner loop iterates over each data point in the training dataset.*/
                 for i in 0..self.weights.len() {
                     self.weights[i] += self.learning_rate * error * inputs[i];
-
                 }
                 self.bias += self.learning_rate * error;
             }
         }
+    }
+
+    fn can_separate(&self, training_data: &Vec<(Vec<f64>, bool)>) -> bool {
+        training_data.iter().all(|(inputs, target)| self.predict(inputs) == *target)
     }
 }
 
@@ -96,7 +102,7 @@ fn plot_data(training_data: &Vec<(Vec<f64>, bool)>, perceptron: &Perceptron) {
                 color,
                 &|c, s, st| {
                     return EmptyElement::at(c)    // We want to construct a composed element on-the-fly
-                        + Circle::new((0,0),s,st.filled());
+                        + Circle::new((0, 0), s, st.filled());
                 },
             ))
             .unwrap();
