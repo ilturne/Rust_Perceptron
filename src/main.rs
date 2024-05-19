@@ -11,19 +11,25 @@ fn main() {
     let mut rng = rand::thread_rng();
     let num_features = 2;
     let learning_rate = 0.1;
-    let epochs = 1000;
+    let epochs = 1000000;
 
     // Generate clustered data for training
-    let cluster_size = 50;
+    let cluster_size = 20;
     let mut training_data = vec![];
+
+    // Define cluster centers
+    let center1 = (rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0));
+    let center2 = (rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0));
+
+    // Generate data around cluster centers
     for _ in 0..cluster_size {
-        let x1: f64 = rng.gen_range(-1.0..0.0);
-        let x2: f64 = rng.gen_range(-1.0..0.0);
+        let x1: f64 = rng.gen_range(center1.0 - 0.5..center1.0 + 0.5);
+        let x2: f64 = rng.gen_range(center1.1 - 0.5..center1.1 + 0.5);
         training_data.push((vec![x1, x2], false));
     }
     for _ in 0..cluster_size {
-        let x1: f64 = rng.gen_range(0.0..1.0);
-        let x2: f64 = rng.gen_range(0.0..1.0);
+        let x1: f64 = rng.gen_range(center2.0 - 0.5..center2.0 + 0.5);
+        let x2: f64 = rng.gen_range(center2.1 - 0.5..center2.1 + 0.5);
         training_data.push((vec![x1, x2], true));
     }
 
